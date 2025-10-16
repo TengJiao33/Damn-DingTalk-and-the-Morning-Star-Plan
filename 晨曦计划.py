@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import re
 
 # ==============================================================================
-# --- 配置区 ---
+# --- 配置 ---
 # ==============================================================================
 
 STUDENT_INFO_CSV = '学生名单.csv'
@@ -15,13 +15,11 @@ EVENING_MIN_DURATION = 60
 HEADER_ROW_NUMBER = 4
 PROFESSIONAL_CLASS_NAME = "信息管理与信息系统01"
 
-# ==============================================================================
-# --- 脚本核心逻辑 (变量名修正版) ---
-# ==============================================================================
+
 
 def load_student_info(csv_path):
     if not os.path.exists(csv_path):
-        print(f"!! 严重错误：找不到学生名单文件 '{csv_path}'。")
+        print(f"找不到学生名单文件 '{csv_path}'。")
         return None
     try:
         df = pd.read_csv(csv_path, dtype={'学号': str})
@@ -56,7 +54,6 @@ def is_number(s):
     except (ValueError, TypeError):
         return False
 
-# --- 这里是修正的地方 ---
 # 将参数名从 student_id_map 改为 student_map，与主函数保持一致
 def process_all_data(file_path, student_map):
     """
@@ -66,7 +63,7 @@ def process_all_data(file_path, student_map):
     try:
         df = pd.read_excel(file_path, sheet_name="打卡时间", header=HEADER_ROW_NUMBER - 1)
     except Exception as e:
-        print(f"!! 错误：无法读取Excel文件 '{file_path}'。详细错误: {e}")
+        print(f" '{file_path}'。详细错误: {e}")
         return None, None
 
     match = re.search(r'_(\d{8})-', os.path.basename(file_path))
@@ -102,7 +99,7 @@ def process_all_data(file_path, student_map):
     if df.empty:
         return pd.DataFrame(columns=['姓名', '日期']), pd.DataFrame(columns=['姓名', '日期', '打卡时段', '问题描述'])
 
-    print(f"数据重塑成功，共得到 {len(df)} 条独立的打卡流水记录，开始统计...")
+    print(f"共得到 {len(df)} 条独立的打卡流水记录，开始统计...")
     
     valid_sessions, abnormal_records = [], []
     grouped = df.groupby(["姓名", '日期', '时段'])
@@ -142,12 +139,12 @@ def main():
 
     latest_input_excel = find_latest_file("*_考勤报表_*.xlsx")
     if not latest_input_excel:
-        print("!! 错误：在文件夹中未找到任何考勤报表Excel文件。")
+        print("考勤报表Excel文件。")
         input("按任意键退出..."); return
 
     all_valid_sessions, all_abnormal_records = process_all_data(latest_input_excel, student_map) # 调用时变量名正确
     if all_valid_sessions is None: 
-        print("!! 处理数据时发生致命错误，程序已终止。")
+        print("发生致命错误，已终止。")
         input("按任意键退出..."); return
 
     student_df = pd.DataFrame(student_map.items(), columns=['姓名', '学号'])
@@ -179,7 +176,7 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     excel_filename = f'晨曦计划打卡统计结果_{timestamp}.xlsx'
     excel_output_df.to_excel(excel_filename, sheet_name='累计打卡统计', index=False)
-    print(f"\n---> 新的累计统计Excel已生成: {excel_filename}")
+    print(f"\n---> 统计Excel已生成: {excel_filename}")
     
     md_df = final_df[['姓名', '学号', '本周打卡次数', '累计打卡次数']].copy()
     
@@ -199,9 +196,9 @@ def main():
         f.write(f"# 晨曦计划周报 ({start_of_week} 至 {end_of_week})\n\n")
         f.write(md_df.to_markdown(index=False))
         
-    print(f"---> 新的Markdown周报已生成: {md_filename}")
+    print(f"---> Markdown周报已生成: {md_filename}")
 
-    input("\n所有任务处理完成，按任意键退出...")
+    input("\n所有任务处理完成，按任意键退出")
 
 if __name__ == "__main__":
     main()
